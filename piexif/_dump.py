@@ -4,12 +4,12 @@ import struct
 
 from ._common import *
 from ._exif import *
-
+from ._validate import *
 
 TIFF_HEADER_LENGTH = 8
 
 
-def dump(exif_dict_original):
+def dump(exif_dict_original, do_validate = False):
     """
     py:function:: piexif.load(data)
 
@@ -25,6 +25,10 @@ def dump(exif_dict_original):
     gps_is = False
     interop_is = False
     first_is = False
+
+    if do_validate:
+        exif_dict = validate(exif_dict)
+        del exif_dict['_types']
 
     if "0th" in exif_dict:
         zeroth_ifd = exif_dict["0th"]

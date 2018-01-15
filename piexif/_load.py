@@ -23,7 +23,14 @@ def load(input_data, key_is_name=False):
                  "GPS":{},
                  "Interop":{},
                  "1st":{},
-                 "thumbnail":None}
+                 "thumbnail":None,
+                 # following are for individual tag types from file
+                 "_types": {
+                     "0th":{},
+                     "Exif":{},
+                     "GPS":{},
+                     "Interop":{},
+                     "1st":{}}}
     exifReader = _ExifReader(input_data)
     if exifReader.tiftag is None:
         return exif_dict
@@ -35,21 +42,21 @@ def load(input_data, key_is_name=False):
 
     pointer = struct.unpack(exifReader.endian_mark + "L",
                             exifReader.tiftag[4:8])[0]
-    exif_dict["0th"] = exifReader.get_ifd_dict(pointer, "0th")
+    exif_dict["0th"], exif_dict["_types"]["0th"] = exifReader.get_ifd_dict(pointer, "0th")
     first_ifd_pointer = exif_dict["0th"].pop("first_ifd_pointer")
     if ImageIFD.ExifTag in exif_dict["0th"]:
         pointer = exif_dict["0th"][ImageIFD.ExifTag]
-        exif_dict["Exif"] = exifReader.get_ifd_dict(pointer, "Exif")
+        exif_dict["Exif"], exif_dict["_types"]["Exif"] = exifReader.get_ifd_dict(pointer, "Exif")
     if ImageIFD.GPSTag in exif_dict["0th"]:
         pointer = exif_dict["0th"][ImageIFD.GPSTag]
-        exif_dict["GPS"] = exifReader.get_ifd_dict(pointer, "GPS")
+        exif_dict["GPS"], exif_dict["_types"]["GPS"] = exifReader.get_ifd_dict(pointer, "GPS")
     if ExifIFD.InteroperabilityTag in exif_dict["Exif"]:
         pointer = exif_dict["Exif"][ExifIFD.InteroperabilityTag]
-        exif_dict["Interop"] = exifReader.get_ifd_dict(pointer, "Interop")
+        exif_dict["Interop"], exif_dict["_types"]["Interop"] = exifReader.get_ifd_dict(pointer, "Interop")
     if first_ifd_pointer != b"\x00\x00\x00\x00":
         pointer = struct.unpack(exifReader.endian_mark + "L",
                                 first_ifd_pointer)[0]
-        exif_dict["1st"] = exifReader.get_ifd_dict(pointer, "1st")
+        exif_dict["1st"], exif_dict["_types"]["1st"] = exifReader.get_ifd_dict(pointer, "1st")
         if (ImageIFD.JPEGInterchangeFormat in exif_dict["1st"] and
             ImageIFD.JPEGInterchangeFormatLength in exif_dict["1st"]):
             end = (exif_dict["1st"][ImageIFD.JPEGInterchangeFormat] +
@@ -101,6 +108,7 @@ class _ExifReader(object):
 
     def get_ifd_dict(self, pointer, ifd_name, read_unknown=False):
         ifd_dict = {}
+        ifd_type = {}
         tag_count = struct.unpack(self.endian_mark + "H",
                                   self.tiftag[pointer: pointer+2])[0]
         offset = pointer + 2
@@ -123,15 +131,17 @@ class _ExifReader(object):
             v_set = (value_type, value_num, value, tag)
             if tag in TAGS[t]:
                 ifd_dict[tag] = self.convert_value(v_set)
+                ifd_type[tag] = value_type
             elif read_unknown:
                 ifd_dict[tag] = (v_set[0], v_set[1], v_set[2], self.tiftag)
+                ifd_type[tag] = value_type
             #else:
             #    pass
 
         if ifd_name == "0th":
             pointer = offset + 12 * tag_count
             ifd_dict["first_ifd_pointer"] = self.tiftag[pointer:pointer + 4]
-        return ifd_dict
+        return (ifd_dict, ifd_type)
 
     def convert_value(self, val):
         data = None
