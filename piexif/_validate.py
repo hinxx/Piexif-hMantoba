@@ -1,11 +1,12 @@
 import struct
+import copy
 
 # from ._common import *
 # from ._exceptions import InvalidImageDataError
 from ._exif import *
 # from piexif import _webp
 
-def validate(exif_dict):
+def validate(exif_dict_original):
     """
     py:function:: piexif.validate(ifd_dict)
 
@@ -16,6 +17,7 @@ def validate(exif_dict):
     :rtype: dict
     """
     
+    exif_dict = copy.deepcopy(exif_dict_original)
     for n, ifd in exif_dict.items():
 #         print("IFD:", n, ifd)
         rmtags = []

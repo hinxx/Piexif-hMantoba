@@ -9,9 +9,17 @@ exif_dict = piexif.load(sys.argv[1])
 #print('Keys:', exif_dict.keys())
 #print('Pre validate:', exif_dict['_types']['GPS'])
 #print('Pre validate:', exif_dict['GPS'])
-std_exif_dict = piexif.validate(exif_dict)
+#std_exif_dict = piexif.validate(exif_dict)
 #print('Post fixup:', std_exif_dict['GPS'])
 
 exif_bytes_1 = piexif.dump(exif_dict)
+
+f1 = open('dump_orig','wb')
+f1.write(exif_bytes_1)
+f1.close()
+
 exif_bytes_2 = piexif.dump(exif_dict, True)
 
+f1 = open('dump_std','wb')
+f1.write(exif_bytes_2)
+f1.close()
