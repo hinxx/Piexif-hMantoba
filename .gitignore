@@ -96,7 +96,6 @@ $RECYCLE.BIN/
 
 samples2
 load_sample.py
-*.pdf
 *.suo
 doc/_build/
 run_coverage.bat
